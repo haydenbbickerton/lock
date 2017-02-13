@@ -1,7 +1,7 @@
 <?php
-namespace BeatSwitch\Lock\Resources;
+namespace BeatSwitch\Lock\Targets;
 
-final class SimpleResource implements Resource
+final class SimpleTarget implements Target
 {
     /**
      * @var string
@@ -24,21 +24,21 @@ final class SimpleResource implements Resource
     }
 
     /**
-     * The string value for the type of resource
+     * The string value for the type of target
      *
      * @return string
      */
-    public function getResourceType()
+    public function getTargetType()
     {
         return $this->type;
     }
 
     /**
-     * The main identifier for the resource
+     * The main identifier for the target
      *
      * @return int|null
      */
-    public function getResourceId()
+    public function getTargetId()
     {
         return $this->id;
     }

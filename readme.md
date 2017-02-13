@@ -35,7 +35,7 @@ Created by [Dries Vints](https://twitter.com/driesvints). Made possible thanks t
     - [Setting a God caller](#setting-a-god-caller)
     - [Working with roles](#working-with-roles)
     - [Working with conditions](#working-with-conditions)
-    - [Retrieving allowed or denied resources](#retrieving-allowed-or-denied-resources)
+    - [Retrieving allowed or denied targets](#retrieving-allowed-or-denied-targets)
     - [Using the LockAware trait](#using-the-lockaware-trait)
 - [Api](#api)
 - [Building a driver](#building-a-driver)
@@ -50,11 +50,11 @@ Created by [Dries Vints](https://twitter.com/driesvints). Made possible thanks t
 - `Lock`: An acl instance for a subject. This package currently ships with a `CallerLock` and a `RoleLock` 
 - `Caller`: An identity object that can have permissions to do something
 - `Driver`: A storage system for permissions which can either be static or persistent
-- `Permission`: A permission holds an action and an optional (unique) resource. Can be either a `Restriction` or a `Privilege`
-- `Restriction`: A restriction denies you from being able to perform an action (on an optional resource)
-- `Privilege`: A privilege allows you to perform an action (on an optional resource)
+- `Permission`: A permission holds an action and an optional (unique) target. Can be either a `Restriction` or a `Privilege`
+- `Restriction`: A restriction denies you from being able to perform an action (on an optional target)
+- `Privilege`: A privilege allows you to perform an action (on an optional target)
 - `Action`: An action is something you are either allowed or denied to do
-- `Resource`: A resource can be an object where you can perform one or more actions on. It can either target a certain type of resource or a specific resource by its unique identifier
+- `Target`: A target can be an object where you can perform one or more actions on. It can either target a certain type of target or a specific target by its unique identifier
 - `Role`: A role can also hold multiple permissions. A caller can have multiple roles. Roles can inherit permissions from other roles
 
 ## Features
@@ -74,7 +74,7 @@ By working with Lock's `Caller` contract you can set permissions on multiple ide
 
 The `Driver` contract allows for an easy way to store permissions to a persistent or static storage system. A default static `ArrayDriver` ships with this package. Check out the list below for more drivers which have already been prepared for you. Or build your own by implementing the `Driver` contract.
 
-You can set and check permissions for resources by manually passing along a resource's type and (optional) identifier or you can implement the `Resource` contract onto your objects so you can pass them along to lock more easily.
+You can set and check permissions for targets by manually passing along a target's type and (optional) identifier or you can implement the `Target` contract onto your objects so you can pass them along to lock more easily.
 
 The `Manager` allows for an easy way to instantiate new `Lock` instances, set action aliases or register roles.
 
@@ -207,18 +207,18 @@ class UserManagementController extends BaseController
     {
         $userId = Input::get('user');
         $action = Input::get('action');
-        $resource = Input::get('resource');
+        $target = Input::get('target');
 
         $user = User::find($userId);
 
-        $this->lockManager->caller($user)->toggle($action, $resource);
+        $this->lockManager->caller($user)->toggle($action, $target);
 
         return Redirect::route('user_management');
     }
 }
 ```
 
-Every time the `togglePermission` method is used, the user's permission for the given action and resource type will be toggled.
+Every time the `togglePermission` method is used, the user's permission for the given action and target type will be toggled.
 
 ### Setting and checking permissions
 
@@ -283,7 +283,7 @@ $lock->can(['create', 'delete'], 'posts'); // false
 
 ### Clearing permissions
 
-You can easily clear permissions for a set specific combination of actions and resources.
+You can easily clear permissions for a set specific combination of actions and targets.
 
 ```php
 $lock->allow(['create', 'edit'], 'posts');
@@ -397,7 +397,7 @@ Let's setup a condition.
 use BeatSwitch\Lock\Lock;
 use BeatSwitch\Lock\Permissions\Condition;
 use BeatSwitch\Lock\Permissions\Permission;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 use Illuminate\Auth\AuthManager;
 
 class LoggedInCondition implements Condition
@@ -423,10 +423,10 @@ class LoggedInCondition implements Condition
      * @param \BeatSwitch\Lock\Lock $lock                         The current Lock instance that's being used
      * @param \BeatSwitch\Lock\Permissions\Permission $permission The Permission that's being checked
      * @param string $action                                      The action passed to the can or cannot method
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource  The resource passed to the can or cannot method
+     * @param \BeatSwitch\Lock\Targets\Target|null $target  The target passed to the can or cannot method
      * @return bool
      */
-    public function assert(Lock $lock, Permission $permission, $action, Resource $resource = null)
+    public function assert(Lock $lock, Permission $permission, $action, Target $target = null)
     {
         // Condition will succeed if the user is logged in.
         return $this->auth->check();
@@ -455,15 +455,15 @@ You can pass along as many conditions as you like but they all need to succeed i
 You can also use a callback if you like.
 
 ```php
-$lock->allow('create', 'posts', null, function ($lock, $permission, $action, $resource = null) {
+$lock->allow('create', 'posts', null, function ($lock, $permission, $action, $target = null) {
     return false;
 });
 $lock->can('create', 'posts'); // false because the callback returns false.
 ```
 
-### Retrieving allowed or denied resources
+### Retrieving allowed or denied targets
 
-If you'd like to retrieve a list of resources which are allowed or denied to perform a particularly action you can use the `allowed` and `denied` methods on a `Lock` instance.
+If you'd like to retrieve a list of targets which are allowed or denied to perform a particularly action you can use the `allowed` and `denied` methods on a `Lock` instance.
 
 ```php
 $lock->allow('update', 'users', 1);
@@ -475,7 +475,7 @@ $lock->allowed('update', 'users'); // Returns [1, 3];
 $lock->denied('update', 'users'); // Returns [2];
 ```
 
-> Please keep in mind that you can only retrieve id's from resources which have permissions set. Resources which aren't registered through Lock won't be returned.
+> Please keep in mind that you can only retrieve id's from targets which have permissions set. Targets which aren't registered through Lock won't be returned.
 
 ### Using the LockAware trait
 
@@ -548,8 +548,8 @@ Checks to see if the current caller has permission to do something.
 ```
 can(
     string|array $action,
-    string|\BeatSwitch\Lock\Resources\Resource $resource = null,
-    int $resourceId = null
+    string|\BeatSwitch\Lock\Targets\Target $target = null,
+    int $targetId = null
 )
 ```
 
@@ -560,8 +560,8 @@ Checks to see if it's forbidden for the current caller to do something.
 ```
 cannot(
     string|array $action,
-    string|\BeatSwitch\Lock\Resources\Resource $resource = null,
-    int $resourceId = null
+    string|\BeatSwitch\Lock\Targets\Target $target = null,
+    int $targetId = null
 )
 ```
 
@@ -572,8 +572,8 @@ Sets a `Privilege` permission on a caller to allow it to do something. Removes a
 ```
 allow(
     string|array $action,
-    string|\BeatSwitch\Lock\Resources\Resource $resource = null,
-    int $resourceId = null,
+    string|\BeatSwitch\Lock\Targets\Target $target = null,
+    int $targetId = null,
     \BeatSwitch\Lock\Permissions\Condition[] $conditions = []
 )
 ```
@@ -585,8 +585,8 @@ Sets a `Restriction` permission on a caller to prevent it from doing something. 
 ```
 deny(
     string|array $action,
-    string|\BeatSwitch\Lock\Resources\Resource $resource = null,
-    int $resourceId = null,
+    string|\BeatSwitch\Lock\Targets\Target $target = null,
+    int $targetId = null,
     \BeatSwitch\Lock\Permissions\Condition[] $conditions = []
 )
 ```
@@ -598,30 +598,30 @@ Toggles the value for the given permission.
 ```
 toggle(
     string|array $action,
-    string|\BeatSwitch\Lock\Resources\Resource $resource = null,
-    int $resourceId = null
+    string|\BeatSwitch\Lock\Targets\Target $target = null,
+    int $targetId = null
 )
 ```
 
 #### allowed
 
-Returns all the id's in an array of the given resource type to which the subject is allowed to perform the given action on.
+Returns all the id's in an array of the given target type to which the subject is allowed to perform the given action on.
 
 ```
 allowed(
     string|array $action,
-    string|\BeatSwitch\Lock\Resources\Resource $resourceType
+    string|\BeatSwitch\Lock\Targets\Target $targetType
 )
 ```
 
 #### denied
 
-Returns all the id's in an array of the given resource type to which the subject is denied to perform the given action on.
+Returns all the id's in an array of the given target type to which the subject is denied to perform the given action on.
 
 ```
 denied(
     string|array $action,
-    string|\BeatSwitch\Lock\Resources\Resource $resourceType
+    string|\BeatSwitch\Lock\Targets\Target $targetType
 )
 ```
 
@@ -701,16 +701,16 @@ We'll assume we have a `CallerPermission` model class with at least the followin
 - `caller_id` (int, 11)
 - `type` (varchar, 10)
 - `action` (varchar, 100)
-- `resource_type` (varchar, 100, nullable)
-- `resource_id` (int, 11, nullable)
+- `target_type` (varchar, 100, nullable)
+- `target_id` (int, 11, nullable)
 
 And we have a `RolePermission` model with the following database columns:
 
 - `role` (varchar, 100)
 - `type` (varchar, 10)
 - `action` (varchar, 100)
-- `resource_type` (varchar, 100, nullable)
-- `resource_id` (int, 11, nullable)
+- `target_type` (varchar, 100, nullable)
+- `target_id` (int, 11, nullable)
 
 Let's check out a full implementation of the driver below. Notice that for the `getCallerPermissions` method we're using the `PermissionFactory` class to easily map the data and create `Permission` objects from them. The `PermissionFactory`'s `createFromData` method will accept both arrays and objects.
 
@@ -756,8 +756,8 @@ class EloquentDriver implements Driver
         $eloquentPermission->caller_id = $caller->getCallerId();
         $eloquentPermission->type = $permission->getType();
         $eloquentPermission->action = $permission->getAction();
-        $eloquentPermission->resource_type = $permission->getResourceType();
-        $eloquentPermission->resource_id = $permission->getResourceId();
+        $eloquentPermission->target_type = $permission->getTargetType();
+        $eloquentPermission->target_id = $permission->getTargetId();
         $eloquentPermission->save();
     }
 
@@ -774,8 +774,8 @@ class EloquentDriver implements Driver
             ->where('caller_id', $caller->getCallerId())
             ->where('type', $permission->getType())
             ->where('action', $permission->getAction())
-            ->where('resource_type', $permission->getResourceType())
-            ->where('resource_id', $permission->getResourceId())
+            ->where('target_type', $permission->getTargetType())
+            ->where('target_id', $permission->getTargetId())
             ->delete();
     }
 
@@ -792,8 +792,8 @@ class EloquentDriver implements Driver
             ->where('caller_id', $caller->getCallerId())
             ->where('type', $permission->getType())
             ->where('action', $permission->getAction())
-            ->where('resource_type', $permission->getResourceType())
-            ->where('resource_id', $permission->getResourceId())
+            ->where('target_type', $permission->getTargetType())
+            ->where('target_id', $permission->getTargetId())
             ->first();
     }
 
@@ -823,8 +823,8 @@ class EloquentDriver implements Driver
         $eloquentPermission->role = $role->getRoleName();
         $eloquentPermission->type = $permission->getType();
         $eloquentPermission->action = $permission->getAction();
-        $eloquentPermission->resource_type = $permission->getResourceType();
-        $eloquentPermission->resource_id = $permission->getResourceId();
+        $eloquentPermission->target_type = $permission->getTargetType();
+        $eloquentPermission->target_id = $permission->getTargetId();
         $eloquentPermission->save();
     }
 
@@ -840,8 +840,8 @@ class EloquentDriver implements Driver
         RolePermission::where('role', $role->getRoleName())
             ->where('type', $permission->getType())
             ->where('action', $permission->getAction())
-            ->where('resource_type', $permission->getResourceType())
-            ->where('resource_id', $permission->getResourceId())
+            ->where('target_type', $permission->getTargetType())
+            ->where('target_id', $permission->getTargetId())
             ->delete();
     }
 
@@ -857,8 +857,8 @@ class EloquentDriver implements Driver
         return (bool) RolePermission::where('role', $role->getRoleName())
             ->where('type', $permission->getType())
             ->where('action', $permission->getAction())
-            ->where('resource_type', $permission->getResourceType())
-            ->where('resource_id', $permission->getResourceId())
+            ->where('target_type', $permission->getTargetType())
+            ->where('target_id', $permission->getTargetId())
             ->first();
     }
 }

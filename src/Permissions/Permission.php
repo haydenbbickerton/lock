@@ -2,7 +2,7 @@
 namespace BeatSwitch\Lock\Permissions;
 
 use BeatSwitch\Lock\Lock;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 
 /**
  * A contract to define a permission rule, either a restriction or a privilege
@@ -14,10 +14,10 @@ interface Permission
      *
      * @param \BeatSwitch\Lock\Lock $lock
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @return bool
      */
-    public function isAllowed(Lock $lock, $action, Resource $resource = null);
+    public function isAllowed(Lock $lock, $action, Target $target = null);
 
     /**
      * Determine if a permission exactly matches the current instance
@@ -42,24 +42,23 @@ interface Permission
     public function getAction();
 
     /**
-     * The optional resource an action should be checked on
+     * The optional target an action should be checked on
      *
-     * @return \BeatSwitch\Lock\Resources\Resource|null
+     * @return \BeatSwitch\Lock\Targets\Target|null
      */
-    public function getResource();
+    public function getTarget();
 
     /**
-     * The resource's type
+     * The target's type
      *
      * @return string|null
      */
-    public function getResourceType();
+    public function getTargetType();
 
     /**
-     * The resource's identifier
+     * The target's identifier
      *
      * @return int|null
      */
-    public function getResourceId();
+    public function getTargetId();
 }
- 

@@ -2,7 +2,7 @@
 namespace BeatSwitch\Lock\Permissions;
 
 use BeatSwitch\Lock\Lock;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 use Closure;
 
 abstract class AbstractPermission implements Permission
@@ -13,9 +13,9 @@ abstract class AbstractPermission implements Permission
     protected $action;
 
     /**
-     * @var \BeatSwitch\Lock\Resources\Resource|null
+     * @var \BeatSwitch\Lock\Targets\Target|null
      */
-    protected $resource;
+    protected $target;
 
     /**
      * @var \BeatSwitch\Lock\Permissions\Condition[]|\Closure
@@ -24,13 +24,13 @@ abstract class AbstractPermission implements Permission
 
     /**
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @param \BeatSwitch\Lock\Permissions\Condition|\BeatSwitch\Lock\Permissions\Condition[]|\Closure $conditions
      */
-    public function __construct($action, Resource $resource = null, $conditions = [])
+    public function __construct($action, Target $target = null, $conditions = [])
     {
         $this->action = $action;
-        $this->resource = $resource;
+        $this->target = $target;
         $this->setConditions($conditions);
     }
 
@@ -45,7 +45,7 @@ abstract class AbstractPermission implements Permission
         return (
             $this instanceof $permission &&
             $this->action === $permission->getAction() && // Not using matchesAction to avoid the wildcard
-            $this->matchesResource($permission->getResource())
+            $this->matchesTarget($permission->getTarget())
         );
     }
 
@@ -54,20 +54,20 @@ abstract class AbstractPermission implements Permission
      *
      * @param \BeatSwitch\Lock\Lock $lock
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @return bool
      */
-    protected function resolve(Lock $lock, $action, Resource $resource = null)
+    protected function resolve(Lock $lock, $action, Target $target = null)
     {
-        // If no resource was set for this permission we'll only need to check the action.
-        if ($this->resource === null || $this->resource->getResourceType() === null) {
-            return $this->matchesAction($action) && $this->resolveConditions($lock, $action, $resource);
+        // If no target was set for this permission we'll only need to check the action.
+        if ($this->target === null || $this->target->getTargetType() === null) {
+            return $this->matchesAction($action) && $this->resolveConditions($lock, $action, $target);
         }
 
         return (
             $this->matchesAction($action) &&
-            $this->matchesResource($resource) &&
-            $this->resolveConditions($lock, $action, $resource)
+            $this->matchesTarget($target) &&
+            $this->resolveConditions($lock, $action, $target)
         );
     }
 
@@ -83,29 +83,29 @@ abstract class AbstractPermission implements Permission
     }
 
     /**
-     * Validate the resource
+     * Validate the target
      *
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @return bool
      */
-    protected function matchesResource(Resource $resource = null)
+    protected function matchesTarget(Target $target = null)
     {
-        // If the resource is null we should only return true if the current resource is also null.
-        if ($resource === null) {
-            return $this->getResource() === null || (
-                $this->getResourceType() === null && $this->getResourceId() === null
+        // If the target is null we should only return true if the current target is also null.
+        if ($target === null) {
+            return $this->getTarget() === null || (
+                $this->getTargetType() === null && $this->getTargetId() === null
             );
         }
 
-        // If the permission's resource id is null then all resources with a specific ID are accepted.
-        if ($this->getResourceId() === null) {
-            return $this->getResourceType() === $resource->getResourceType();
+        // If the permission's target id is null then all targets with a specific ID are accepted.
+        if ($this->getTargetId() === null) {
+            return $this->getTargetType() === $target->getTargetType();
         }
 
-        // Otherwise make sure that we're matching a specific resource.
+        // Otherwise make sure that we're matching a specific target.
         return (
-            $this->getResourceType() === $resource->getResourceType() &&
-            $this->getResourceId() === $resource->getResourceId()
+            $this->getTargetType() === $target->getTargetType() &&
+            $this->getTargetId() === $target->getTargetId()
         );
     }
 
@@ -128,19 +128,19 @@ abstract class AbstractPermission implements Permission
      *
      * @param \BeatSwitch\Lock\Lock $lock
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @return bool
      */
-    protected function resolveConditions(Lock $lock, $action, $resource)
+    protected function resolveConditions(Lock $lock, $action, $target)
     {
         // If the given condition is a closure, execute it.
         if ($this->conditions instanceof Closure) {
-            return call_user_func($this->conditions, $lock, $this, $action, $resource);
+            return call_user_func($this->conditions, $lock, $this, $action, $target);
         }
 
         // If the conditions are an array of Condition objects, check them all.
         foreach ($this->conditions as $condition) {
-            if (! $condition->assert($lock, $this, $action, $resource)) {
+            if (! $condition->assert($lock, $this, $action, $target)) {
                 return false;
             }
         }
@@ -157,30 +157,30 @@ abstract class AbstractPermission implements Permission
     }
 
     /**
-     * @return \BeatSwitch\Lock\Resources\Resource|null
+     * @return \BeatSwitch\Lock\Targets\Target|null
      */
-    public function getResource()
+    public function getTarget()
     {
-        return $this->resource;
+        return $this->target;
     }
 
     /**
-     * The resource's type
+     * The target's type
      *
      * @return string|null
      */
-    public function getResourceType()
+    public function getTargetType()
     {
-        return $this->resource ? $this->resource->getResourceType() : null;
+        return $this->target ? $this->target->getTargetType() : null;
     }
 
     /**
-     * The resource's identifier
+     * The target's identifier
      *
      * @return int|null
      */
-    public function getResourceId()
+    public function getTargetId()
     {
-        return $this->resource ? $this->resource->getResourceId() : null;
+        return $this->target ? $this->target->getTargetId() : null;
     }
 }

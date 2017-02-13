@@ -3,7 +3,7 @@ namespace BeatSwitch\Lock\Tests;
 
 use BeatSwitch\Lock\Callers\SimpleCaller;
 use BeatSwitch\Lock\Manager;
-use BeatSwitch\Lock\Resources\SimpleResource;
+use BeatSwitch\Lock\Targets\SimpleTarget;
 
 /**
  * The PersistentDriverTestCase can be used to test persistent drivers
@@ -105,7 +105,7 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_succeeds_with_a_valid_resource_type()
+    final function it_succeeds_with_a_valid_target_type()
     {
         $lock = $this->getCallerLock();
 
@@ -115,16 +115,16 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_fails_with_an_invalid_resource_type()
+    final function it_fails_with_an_invalid_target_type()
     {
         $this->assertFalse($this->getCallerLock()->can('delete', 'pages'));
     }
 
     /** @test */
-    final function it_succeeds_with_a_valid_action_on_a_resource_object()
+    final function it_succeeds_with_a_valid_action_on_a_target_object()
     {
         $lock = $this->getCallerLock();
-        $event = new SimpleResource('events', 1);
+        $event = new SimpleTarget('events', 1);
 
         $lock->allow('read', $event);
 
@@ -132,13 +132,13 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_fails_with_an_invalid_action_on_a_resource_object()
+    final function it_fails_with_an_invalid_action_on_a_target_object()
     {
-        $this->assertFalse($this->getCallerLock()->can('edit', new SimpleResource('events', 1)));
+        $this->assertFalse($this->getCallerLock()->can('edit', new SimpleTarget('events', 1)));
     }
 
     /** @test */
-    final function it_fails_with_a_denied_action_on_a_resource_type()
+    final function it_fails_with_a_denied_action_on_a_target_type()
     {
         $lock = $this->getCallerLock();
 
@@ -149,7 +149,7 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_fails_with_a_cleared_action_on_a_resource_type()
+    final function it_fails_with_a_cleared_action_on_a_target_type()
     {
         $lock = $this->getCallerLock();
 
@@ -170,7 +170,7 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
         $this->assertTrue($lock->can('update', 'posts'));
         $this->assertTrue($lock->can('delete', 'posts'));
 
-        // But we can't just call every action for every resource type.
+        // But we can't just call every action for every target type.
         $this->assertFalse($lock->can('create', 'events'));
     }
 
@@ -188,21 +188,21 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    function it_fails_with_a_denied_action_for_a_resource_type()
+    function it_fails_with_a_denied_action_for_a_target_type()
     {
         $lock = $this->getCallerLock();
 
-        $lock->allow('update', new SimpleResource('events', 1));
+        $lock->allow('update', new SimpleTarget('events', 1));
 
         // We can't update every event, just the one with an ID of 1.
         $this->assertFalse($lock->can('update', 'events'));
     }
 
     /** @test */
-    final function it_succeeds_when_overriding_a_denied_action_on_a_resource()
+    final function it_succeeds_when_overriding_a_denied_action_on_a_target()
     {
         $lock = $this->getCallerLock();
-        $stub = new SimpleResource('events', 1);
+        $stub = new SimpleTarget('events', 1);
 
         $lock->deny('update');
         $lock->allow('update', $stub);
@@ -211,13 +211,13 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_fails_with_an_incorrect_resource_object()
+    final function it_fails_with_an_incorrect_target_object()
     {
         $lock = $this->getCallerLock();
 
-        $lock->allow('update', new SimpleResource('events', 1));
+        $lock->allow('update', new SimpleTarget('events', 1));
 
-        $this->assertFalse($lock->can('update', new SimpleResource('events', 2)));
+        $this->assertFalse($lock->can('update', new SimpleTarget('events', 2)));
     }
 
     /** @test */
@@ -256,7 +256,7 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_only_clears_permissions_on_the_given_resource()
+    final function it_only_clears_permissions_on_the_given_target()
     {
         $lock = $this->getCallerLock();
 
@@ -288,7 +288,7 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @todo */
-    final function it_can_clear_all_permissions_for_a_given_resource()
+    final function it_can_clear_all_permissions_for_a_given_target()
     {
         $lock = $this->getCallerLock();
 
@@ -439,7 +439,7 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_can_return_allowed_resource_ids()
+    final function it_can_return_allowed_target_ids()
     {
         $this->getCallerLock()->allow('update', 'users', 1);
         $this->getCallerLock()->allow('update', 'users', 2);
@@ -455,7 +455,7 @@ abstract class PersistentDriverTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /** @test */
-    final function it_can_return_denied_resource_ids()
+    final function it_can_return_denied_target_ids()
     {
         $this->getCallerLock()->allow('update', 'users', 1);
         $this->getCallerLock()->allow('update', 'users', 2);

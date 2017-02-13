@@ -2,8 +2,8 @@
 namespace BeatSwitch\Lock;
 
 use BeatSwitch\Lock\Permissions\Permission;
-use BeatSwitch\Lock\Resources\Resource;
-use BeatSwitch\Lock\Resources\SimpleResource;
+use BeatSwitch\Lock\Targets\Target;
+use BeatSwitch\Lock\Targets\SimpleTarget;
 use BeatSwitch\Lock\Permissions\Privilege;
 use BeatSwitch\Lock\Permissions\Restriction;
 
@@ -18,24 +18,24 @@ abstract class Lock
      * Determine if one or more actions are allowed
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @return bool
      */
-    public function can($action, $resource = null, $resourceId = null)
+    public function can($action, $target = null, $targetId = null)
     {
         $actions = (array) $action;
-        $resource = $this->convertResourceToObject($resource, $resourceId);
+        $target = $this->convertTargetToObject($target, $targetId);
         $permissions = $this->getPermissions();
 
         foreach ($actions as $action) {
             if ($aliases = $this->getAliasesForAction($action)) {
-                if ($this->can($aliases, $resource) && $this->resolveRestrictions($permissions, $action, $resource)) {
+                if ($this->can($aliases, $target) && $this->resolveRestrictions($permissions, $action, $target)) {
                     return true;
                 }
             }
 
-            if (! $this->resolvePermissions($action, $resource)) {
+            if (! $this->resolvePermissions($action, $target)) {
                 return false;
             }
         }
@@ -47,45 +47,45 @@ abstract class Lock
      * Determine if an action isn't allowed
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @return bool
      */
-    public function cannot($action, $resource = null, $resourceId = null)
+    public function cannot($action, $target = null, $targetId = null)
     {
-        return ! $this->can($action, $resource, $resourceId);
+        return ! $this->can($action, $target, $targetId);
     }
 
     /**
      * Give the subject permission to do something
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @param \BeatSwitch\Lock\Permissions\Condition|\BeatSwitch\Lock\Permissions\Condition[]|\Closure $conditions
      */
-    public function allow($action, $resource = null, $resourceId = null, $conditions = [])
+    public function allow($action, $target = null, $targetId = null, $conditions = [])
     {
         $actions = (array) $action;
-        $resource = $this->convertResourceToObject($resource, $resourceId);
+        $target = $this->convertTargetToObject($target, $targetId);
         $permissions = $this->getPermissions();
 
         foreach ($actions as $action) {
             foreach ($permissions as $key => $permission) {
-                if ($permission instanceof Restriction && ! $permission->isAllowed($this, $action, $resource)) {
+                if ($permission instanceof Restriction && ! $permission->isAllowed($this, $action, $target)) {
                     $this->removePermission($permission);
                     unset($permissions[$key]);
                 }
             }
 
             // We'll need to clear any restrictions above
-            $restriction = new Restriction($action, $resource);
+            $restriction = new Restriction($action, $target);
 
             if ($this->hasPermission($restriction)) {
                 $this->removePermission($restriction);
             }
 
-            $this->storePermission(new Privilege($action, $resource, $conditions));
+            $this->storePermission(new Privilege($action, $target, $conditions));
         }
     }
 
@@ -93,20 +93,20 @@ abstract class Lock
      * Deny the subject from doing something
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @param \BeatSwitch\Lock\Permissions\Condition|\BeatSwitch\Lock\Permissions\Condition[]|\Closure $conditions
      */
-    public function deny($action, $resource = null, $resourceId = null, $conditions = [])
+    public function deny($action, $target = null, $targetId = null, $conditions = [])
     {
         $actions = (array) $action;
-        $resource = $this->convertResourceToObject($resource, $resourceId);
+        $target = $this->convertTargetToObject($target, $targetId);
         $permissions = $this->getPermissions();
 
         foreach ($actions as $action) {
-            $this->clearPermission($action, $resource, $permissions);
+            $this->clearPermission($action, $target, $permissions);
 
-            $this->storePermission(new Restriction($action, $resource, $conditions));
+            $this->storePermission(new Restriction($action, $target, $conditions));
         }
     }
 
@@ -114,61 +114,61 @@ abstract class Lock
      * Change the value for a permission
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      */
-    public function toggle($action, $resource = null, $resourceId = null)
+    public function toggle($action, $target = null, $targetId = null)
     {
-        if ($this->can($action, $resource, $resourceId)) {
-            $this->deny($action, $resource, $resourceId);
+        if ($this->can($action, $target, $targetId)) {
+            $this->deny($action, $target, $targetId);
         } else {
-            $this->allow($action, $resource, $resourceId);
+            $this->allow($action, $target, $targetId);
         }
     }
 
     /**
-     * Returns the allowed ids which match the given action and resource type
+     * Returns the allowed ids which match the given action and target type
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resourceType
+     * @param string|\BeatSwitch\Lock\Targets\Target $targetType
      * @return array
      */
-    public function allowed($action, $resourceType)
+    public function allowed($action, $targetType)
     {
-        $resourceType = $resourceType instanceof Resource ? $resourceType->getResourceType() : $resourceType;
+        $targetType = $targetType instanceof Target ? $targetType->getTargetType() : $targetType;
 
-        // Get all the ids from privileges which match the given resource type.
+        // Get all the ids from privileges which match the given target type.
         $ids = array_unique(array_map(function (Permission $permission) {
-            return $permission->getResourceId();
-        }, array_filter($this->getPermissions(), function (Permission $permission) use ($resourceType) {
-            return $permission instanceof Privilege && $permission->getResourceType() === $resourceType;
+            return $permission->getTargetId();
+        }, array_filter($this->getPermissions(), function (Permission $permission) use ($targetType) {
+            return $permission instanceof Privilege && $permission->getTargetType() === $targetType;
         })));
 
-        return array_values(array_filter($ids, function ($id) use ($action, $resourceType) {
-            return $this->can($action, $resourceType, $id);
+        return array_values(array_filter($ids, function ($id) use ($action, $targetType) {
+            return $this->can($action, $targetType, $id);
         }));
     }
 
     /**
-     * Returns the denied ids which match the given action and resource type
+     * Returns the denied ids which match the given action and target type
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resourceType
+     * @param string|\BeatSwitch\Lock\Targets\Target $targetType
      * @return array
      */
-    public function denied($action, $resourceType)
+    public function denied($action, $targetType)
     {
-        $resourceType = $resourceType instanceof Resource ? $resourceType->getResourceType() : $resourceType;
+        $targetType = $targetType instanceof Target ? $targetType->getTargetType() : $targetType;
 
-        // Get all the ids from restrictions which match the given resource type.
+        // Get all the ids from restrictions which match the given target type.
         $ids = array_unique(array_map(function (Permission $permission) {
-            return $permission->getResourceId();
-        }, array_filter($this->getPermissions(), function (Permission $permission) use ($resourceType) {
-            return $permission instanceof Restriction && $permission->getResourceType() === $resourceType;
+            return $permission->getTargetId();
+        }, array_filter($this->getPermissions(), function (Permission $permission) use ($targetType) {
+            return $permission instanceof Restriction && $permission->getTargetType() === $targetType;
         })));
 
-        return array_values(array_filter($ids, function ($id) use ($action, $resourceType) {
-            return $this->cannot($action, $resourceType, $id);
+        return array_values(array_filter($ids, function ($id) use ($action, $targetType) {
+            return $this->cannot($action, $targetType, $id);
         }));
     }
 
@@ -176,46 +176,46 @@ abstract class Lock
      * Clear a given permission on a subject
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      */
-    public function clear($action = null, $resource = null, $resourceId = null)
+    public function clear($action = null, $target = null, $targetId = null)
     {
         $actions = (array) $action;
-        $resourceObject = $this->convertResourceToObject($resource, $resourceId);
+        $targetObject = $this->convertTargetToObject($target, $targetId);
         $permissions = $this->getPermissions();
 
-        if ($action === null && $resource === null) {
+        if ($action === null && $target === null) {
             // Clear every permission for this lock instance.
             foreach ($permissions as $permission) {
                 $this->removePermission($permission);
             }
-        } elseif ($action === null && $resource !== null) {
-            // Clear all permissions for a given resource.
+        } elseif ($action === null && $target !== null) {
+            // Clear all permissions for a given target.
             /** @todo Needs to be implemented */
         } else {
             // Clear every permission for the given actions.
             foreach ($actions as $action) {
-                $this->clearPermission($action, $resourceObject, $permissions);
+                $this->clearPermission($action, $targetObject, $permissions);
             }
         }
     }
 
     /**
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource $resource
+     * @param \BeatSwitch\Lock\Targets\Target $target
      * @param \BeatSwitch\Lock\Permissions\Permission[] $permissions
      */
-    private function clearPermission($action, Resource $resource, array $permissions)
+    private function clearPermission($action, Target $target, array $permissions)
     {
         foreach ($permissions as $key => $permission) {
-            if ($permission instanceof Privilege && $permission->isAllowed($this, $action, $resource)) {
+            if ($permission instanceof Privilege && $permission->isAllowed($this, $action, $target)) {
                 $this->removePermission($permission);
                 unset($permissions[$key]);
             }
         }
 
-        $privilege = new Privilege($action, $resource);
+        $privilege = new Privilege($action, $target);
 
         if ($this->hasPermission($privilege)) {
             $this->removePermission($privilege);
@@ -226,24 +226,24 @@ abstract class Lock
      * Determine if an action is allowed
      *
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource $resource
+     * @param \BeatSwitch\Lock\Targets\Target $target
      * @return bool
      */
-    abstract protected function resolvePermissions($action, Resource $resource);
+    abstract protected function resolvePermissions($action, Target $target);
 
     /**
-     * Check if the given restrictions prevent the given action and resource to pass
+     * Check if the given restrictions prevent the given action and target to pass
      *
      * @param \BeatSwitch\Lock\Permissions\Permission[] $permissions
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource $resource
+     * @param \BeatSwitch\Lock\Targets\Target $target
      * @return bool
      */
-    protected function resolveRestrictions($permissions, $action, Resource $resource)
+    protected function resolveRestrictions($permissions, $action, Target $target)
     {
         foreach ($permissions as $permission) {
             // If we've found a matching restriction, return false.
-            if ($permission instanceof Restriction && ! $permission->isAllowed($this, $action, $resource)) {
+            if ($permission instanceof Restriction && ! $permission->isAllowed($this, $action, $target)) {
                 return false;
             }
         }
@@ -252,19 +252,19 @@ abstract class Lock
     }
 
     /**
-     * Check if the given privileges allow the given action and resource to pass
+     * Check if the given privileges allow the given action and target to pass
      *
      * @param \BeatSwitch\Lock\Permissions\Permission[] $permissions
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource $resource
+     * @param \BeatSwitch\Lock\Targets\Target $target
      * @return bool
      */
-    protected function resolvePrivileges($permissions, $action, Resource $resource)
+    protected function resolvePrivileges($permissions, $action, Target $target)
     {
         // Search for privileges in the permissions.
         foreach ($permissions as $permission) {
             // If we've found a valid privilege, return true.
-            if ($permission instanceof Privilege && $permission->isAllowed($this, $action, $resource)) {
+            if ($permission instanceof Privilege && $permission->isAllowed($this, $action, $target)) {
                 return true;
             }
         }
@@ -321,15 +321,15 @@ abstract class Lock
     }
 
     /**
-     * Create a resource value object if a non resource object is passed
+     * Create a target value object if a non target object is passed
      *
-     * @param string|\BeatSwitch\Lock\Resources\Resource|null $resource
-     * @param int|null $resourceId
-     * @return \BeatSwitch\Lock\Resources\Resource
+     * @param string|\BeatSwitch\Lock\Targets\Target|null $target
+     * @param int|null $targetId
+     * @return \BeatSwitch\Lock\Targets\Target
      */
-    protected function convertResourceToObject($resource, $resourceId = null)
+    protected function convertTargetToObject($target, $targetId = null)
     {
-        return ! $resource instanceof Resource ? new SimpleResource($resource, $resourceId) : $resource;
+        return ! $target instanceof Target ? new SimpleTarget($target, $targetId) : $target;
     }
 
     /**

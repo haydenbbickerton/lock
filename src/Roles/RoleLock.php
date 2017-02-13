@@ -4,7 +4,7 @@ namespace BeatSwitch\Lock\Roles;
 use BeatSwitch\Lock\Lock;
 use BeatSwitch\Lock\Manager;
 use BeatSwitch\Lock\Permissions\Permission;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 
 class RoleLock extends Lock
 {
@@ -27,21 +27,21 @@ class RoleLock extends Lock
      * Determine if an action is allowed
      *
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource $resource
+     * @param \BeatSwitch\Lock\Targets\Target $target
      * @return bool
      */
-    protected function resolvePermissions($action, Resource $resource)
+    protected function resolvePermissions($action, Target $target)
     {
         $permissions = $this->getInheritedRolePermissions($this->role);
 
         // Search for restrictions in the permissions. We'll do this first
         // because restrictions should override any privileges.
-        if (! $this->resolveRestrictions($permissions, $action, $resource)) {
+        if (! $this->resolveRestrictions($permissions, $action, $target)) {
             return false;
         }
 
         // If there are restrictions on the roles but caller specific privileges are set, allow this to pass.
-        return $this->resolvePrivileges($permissions, $action, $resource);
+        return $this->resolvePrivileges($permissions, $action, $target);
     }
 
     /**

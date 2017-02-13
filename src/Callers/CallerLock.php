@@ -4,7 +4,7 @@ namespace BeatSwitch\Lock\Callers;
 use BeatSwitch\Lock\Lock;
 use BeatSwitch\Lock\Manager;
 use BeatSwitch\Lock\Permissions\Permission;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 
 class CallerLock extends Lock
 {
@@ -27,28 +27,28 @@ class CallerLock extends Lock
      * Determine if an action is allowed
      *
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource $resource
+     * @param \BeatSwitch\Lock\Targets\Target $target
      * @return bool
      */
-    protected function resolvePermissions($action, Resource $resource)
+    protected function resolvePermissions($action, Target $target)
     {
         $permissions = $this->getPermissions();
 
         // Search for restrictions in the permissions. We'll do this first
         // because restrictions should override any privileges.
-        if (! $this->resolveRestrictions($permissions, $action, $resource)) {
+        if (! $this->resolveRestrictions($permissions, $action, $target)) {
             return false;
         }
 
-        // Check if one of the caller's roles has permission to do the action on the resource.
+        // Check if one of the caller's roles has permission to do the action on the target.
         foreach ($this->getLockInstancesForCallerRoles() as $roleLock) {
-            if ($roleLock->can($action, $resource)) {
+            if ($roleLock->can($action, $target)) {
                 return true;
             }
         }
 
         // If no restrictions are found, pass when a privilege is found on either the roles or caller.
-        return $this->resolvePrivileges($permissions, $action, $resource);
+        return $this->resolvePrivileges($permissions, $action, $target);
     }
 
     /**

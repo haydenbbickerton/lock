@@ -10,8 +10,8 @@ class PermissionFactoryTest extends \PHPUnit_Framework_TestCase
     function it_can_map_an_array_of_data_to_permission_objects()
     {
         $data = [
-            ['type' => 'privilege', 'action' => 'create', 'resource_type' => 'events', 'resource_id' => 1],
-            ['type' => 'restriction', 'action' => 'update', 'resource_type' => 'comments', 'resource_id' => null],
+            ['type' => 'privilege', 'action' => 'create', 'target_type' => 'events', 'target_id' => 1],
+            ['type' => 'restriction', 'action' => 'update', 'target_type' => 'comments', 'target_id' => null],
         ];
 
         $result = PermissionFactory::createFromData($data);
@@ -22,7 +22,7 @@ class PermissionFactoryTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_can_map_an_array_of_data_to_a_permission_object()
     {
-        $data = ['type' => 'privilege', 'action' => 'update', 'resource_type' => 'comments', 'resource_id' => null];
+        $data = ['type' => 'privilege', 'action' => 'update', 'target_type' => 'comments', 'target_id' => null];
 
         $result = PermissionFactory::createFromArray($data);
 
@@ -35,14 +35,14 @@ class PermissionFactoryTest extends \PHPUnit_Framework_TestCase
         $object = new stdClass();
         $object->type = 'privilege';
         $object->action = 'create';
-        $object->resource_type = 'events';
-        $object->resource_id = 1;
+        $object->target_type = 'events';
+        $object->target_id = 1;
 
         $secondObject = new stdClass();
         $secondObject->type = 'restriction';
         $secondObject->action = 'update';
-        $secondObject->resource_type = 'comments';
-        $secondObject->resource_id = null;
+        $secondObject->target_type = 'comments';
+        $secondObject->target_id = null;
 
         $result = PermissionFactory::createFromData([$object, $secondObject]);
 
@@ -55,8 +55,8 @@ class PermissionFactoryTest extends \PHPUnit_Framework_TestCase
         $object = new stdClass();
         $object->type = 'restriction';
         $object->action = 'update';
-        $object->resource_type = 'comments';
-        $object->resource_id = null;
+        $object->target_type = 'comments';
+        $object->target_id = null;
 
         $result = PermissionFactory::createFromObject($object);
 
@@ -71,7 +71,7 @@ class PermissionFactoryTest extends \PHPUnit_Framework_TestCase
             'The permission type you provided "something" is incorrect.'
         );
 
-        $data = [['type' => 'something', 'action' => 'create', 'resource_type' => 'events', 'resource_id' => 1]];
+        $data = [['type' => 'something', 'action' => 'create', 'target_type' => 'events', 'target_id' => 1]];
 
         PermissionFactory::createFromData($data);
     }

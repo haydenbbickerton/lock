@@ -4,7 +4,7 @@ namespace stubs\BeatSwitch\Lock;
 use BeatSwitch\Lock\Lock;
 use BeatSwitch\Lock\Permissions\Condition;
 use BeatSwitch\Lock\Permissions\Permission;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 
 class TrueConditionStub implements Condition
 {
@@ -14,10 +14,10 @@ class TrueConditionStub implements Condition
      * @param \BeatSwitch\Lock\Lock $lock
      * @param \BeatSwitch\Lock\Permissions\Permission $permission
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @return bool
      */
-    public function assert(Lock $lock, Permission $permission, $action, Resource $resource = null)
+    public function assert(Lock $lock, Permission $permission, $action, Target $target = null)
     {
         return true;
     }

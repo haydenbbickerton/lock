@@ -2,7 +2,7 @@
 namespace BeatSwitch\Lock\Permissions;
 
 use BeatSwitch\Lock\Lock;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 
 /**
  * A contract to define a permission condition. Conditions need to give
@@ -16,8 +16,8 @@ interface Condition
      * @param \BeatSwitch\Lock\Lock $lock
      * @param \BeatSwitch\Lock\Permissions\Permission $permission
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @return bool
      */
-    public function assert(Lock $lock, Permission $permission, $action, Resource $resource = null);
+    public function assert(Lock $lock, Permission $permission, $action, Target $target = null);
 }

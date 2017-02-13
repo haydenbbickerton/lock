@@ -51,7 +51,7 @@ class ArrayDriver implements Driver
      */
     public function removeCallerPermission(Caller $caller, Permission $permission)
     {
-        // Remove permissions which match the action and resource
+        // Remove permissions which match the action and target
         $this->permissions[$this->getCallerKey($caller)] = array_filter(
             $this->getCallerPermissions($caller),
             function (Permission $callerPermission) use ($permission) {
@@ -115,7 +115,7 @@ class ArrayDriver implements Driver
      */
     public function removeRolePermission(Role $role, Permission $permission)
     {
-        // Remove permissions which match the action and resource
+        // Remove permissions which match the action and target
         $this->permissions[$this->getRoleKey($role)] = array_filter(
             $this->getRolePermissions($role),
             function (Permission $rolePermission) use ($permission) {

@@ -75,7 +75,7 @@ class RoleLockSpec extends ObjectBehavior
         $this->can('delete')->shouldReturn(false);
     }
 
-    function it_only_clears_the_privileges_on_the_requested_resource()
+    function it_only_clears_the_privileges_on_the_requested_target()
     {
         $this->allow('create', 'users');
         $this->allow('create', 'accounts');

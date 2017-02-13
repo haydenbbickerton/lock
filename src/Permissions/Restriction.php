@@ -2,7 +2,7 @@
 namespace BeatSwitch\Lock\Permissions;
 
 use BeatSwitch\Lock\Lock;
-use BeatSwitch\Lock\Resources\Resource;
+use BeatSwitch\Lock\Targets\Target;
 
 /**
  * A restriction is placed when you deny a caller something
@@ -17,12 +17,12 @@ class Restriction extends AbstractPermission implements Permission
      *
      * @param \BeatSwitch\Lock\Lock $lock
      * @param string $action
-     * @param \BeatSwitch\Lock\Resources\Resource|null $resource
+     * @param \BeatSwitch\Lock\Targets\Target|null $target
      * @return bool
      */
-    public function isAllowed(Lock $lock, $action, Resource $resource = null)
+    public function isAllowed(Lock $lock, $action, Target $target = null)
     {
-        return ! $this->resolve($lock, $action, $resource);
+        return ! $this->resolve($lock, $action, $target);
     }
 
     /**

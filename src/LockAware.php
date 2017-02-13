@@ -19,116 +19,116 @@ trait LockAware
      * Determine if one or more actions are allowed
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @return bool
      */
-    public function can($action, $resource = null, $resourceId = null)
+    public function can($action, $target = null, $targetId = null)
     {
         $this->assertLockInstanceIsSet();
 
-        return $this->lock->can($action, $resource, $resourceId);
+        return $this->lock->can($action, $target, $targetId);
     }
 
     /**
      * Determine if an action isn't allowed
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @return bool
      */
-    public function cannot($action, $resource = null, $resourceId = null)
+    public function cannot($action, $target = null, $targetId = null)
     {
         $this->assertLockInstanceIsSet();
 
-        return $this->lock->cannot($action, $resource, $resourceId);
+        return $this->lock->cannot($action, $target, $targetId);
     }
 
     /**
      * Give a caller permission to do something
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @param \BeatSwitch\Lock\Permissions\Condition|\BeatSwitch\Lock\Permissions\Condition[]|\Closure $conditions
      */
-    public function allow($action, $resource = null, $resourceId = null, $conditions = [])
+    public function allow($action, $target = null, $targetId = null, $conditions = [])
     {
         $this->assertLockInstanceIsSet();
 
-        $this->lock->allow($action, $resource, $resourceId, $conditions);
+        $this->lock->allow($action, $target, $targetId, $conditions);
     }
 
     /**
      * Deny a caller from doing something
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      * @param \BeatSwitch\Lock\Permissions\Condition|\BeatSwitch\Lock\Permissions\Condition[]|\Closure $conditions
      */
-    public function deny($action, $resource = null, $resourceId = null, $conditions = [])
+    public function deny($action, $target = null, $targetId = null, $conditions = [])
     {
         $this->assertLockInstanceIsSet();
 
-        $this->lock->deny($action, $resource, $resourceId, $conditions);
+        $this->lock->deny($action, $target, $targetId, $conditions);
     }
 
     /**
      * Change the value for a permission
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      */
-    public function toggle($action, $resource = null, $resourceId = null)
+    public function toggle($action, $target = null, $targetId = null)
     {
         $this->assertLockInstanceIsSet();
 
-        $this->lock->toggle($action, $resource, $resourceId);
+        $this->lock->toggle($action, $target, $targetId);
     }
 
     /**
-     * Returns the allowed ids which match the given action and resource type
+     * Returns the allowed ids which match the given action and target type
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resourceType
+     * @param string|\BeatSwitch\Lock\Targets\Target $targetType
      * @return array
      */
-    public function allowed($action, $resourceType)
+    public function allowed($action, $targetType)
     {
         $this->assertLockInstanceIsSet();
 
-        return $this->lock->allowed($action, $resourceType);
+        return $this->lock->allowed($action, $targetType);
     }
 
     /**
-     * Returns the denied ids which match the given action and resource type
+     * Returns the denied ids which match the given action and target type
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resourceType
+     * @param string|\BeatSwitch\Lock\Targets\Target $targetType
      * @return array
      */
-    public function denied($action, $resourceType)
+    public function denied($action, $targetType)
     {
         $this->assertLockInstanceIsSet();
 
-        return $this->lock->denied($action, $resourceType);
+        return $this->lock->denied($action, $targetType);
     }
 
     /**
      * Clear a given permission on a subject
      *
      * @param string|array $action
-     * @param string|\BeatSwitch\Lock\Resources\Resource $resource
-     * @param int $resourceId
+     * @param string|\BeatSwitch\Lock\Targets\Target $target
+     * @param int $targetId
      */
-    public function clear($action, $resource = null, $resourceId = null)
+    public function clear($action, $target = null, $targetId = null)
     {
         $this->assertLockInstanceIsSet();
 
-        $this->lock->clear($action, $resource, $resourceId);
+        $this->lock->clear($action, $target, $targetId);
     }
 
     /**

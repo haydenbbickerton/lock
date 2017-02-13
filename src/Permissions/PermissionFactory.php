@@ -1,7 +1,7 @@
 <?php
 namespace BeatSwitch\Lock\Permissions;
 
-use BeatSwitch\Lock\Resources\SimpleResource;
+use BeatSwitch\Lock\Targets\SimpleTarget;
 
 class PermissionFactory
 {
@@ -34,17 +34,17 @@ class PermissionFactory
         $type = $permission['type'];
 
         // Make sure the id is typecast to an integer.
-        $id = ! is_null($permission['resource_id']) ? (int) $permission['resource_id'] : null;
+        $id = ! is_null($permission['target_id']) ? (int) $permission['target_id'] : null;
 
         if ($type === Privilege::TYPE) {
             return new Privilege(
                 $permission['action'],
-                new SimpleResource($permission['resource_type'], $id)
+                new SimpleTarget($permission['target_type'], $id)
             );
         } elseif ($type === Restriction::TYPE) {
             return new Restriction(
                 $permission['action'],
-                new SimpleResource($permission['resource_type'], $id)
+                new SimpleTarget($permission['target_type'], $id)
             );
         } else {
             throw new InvalidPermissionType("The permission type you provided \"$type\" is incorrect.");
@@ -61,17 +61,17 @@ class PermissionFactory
     public static function createFromObject($permission)
     {
         // Make sure the id is typecast to an integer.
-        $id = ! is_null($permission->resource_id) ? (int) $permission->resource_id : null;
+        $id = ! is_null($permission->target_id) ? (int) $permission->target_id : null;
 
         if ($permission->type === Privilege::TYPE) {
             return new Privilege(
                 $permission->action,
-                new SimpleResource($permission->resource_type, $id)
+                new SimpleTarget($permission->target_type, $id)
             );
         } elseif ($permission->type === Restriction::TYPE) {
             return new Restriction(
                 $permission->action,
-                new SimpleResource($permission->resource_type, $id)
+                new SimpleTarget($permission->target_type, $id)
             );
         } else {
             throw new InvalidPermissionType("The permission type you provided \"{$permission->type}\" is incorrect.");
